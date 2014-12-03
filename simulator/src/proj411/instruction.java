@@ -48,14 +48,14 @@ public class instruction {
 		}
 		else if (commaIndexes.size() == 1)
 		{
-			param1 = temp.substring(0, commaIndexes.get(0)-1).trim();
+			param1 = temp.substring(0, commaIndexes.get(0)).trim();
 			param2 = temp.substring(commaIndexes.get(0)+1, parameters.length()).trim();
 			param3 = null;
 		}
 		else if (commaIndexes.size() == 2)
 		{
-			param1 = temp.substring(0, commaIndexes.get(0)-1).trim();
-			param2 = temp.substring(commaIndexes.get(0)+1,commaIndexes.get(1)-1).trim();
+			param1 = temp.substring(0, commaIndexes.get(0)).trim();
+			param2 = temp.substring(commaIndexes.get(0)+1,commaIndexes.get(1)).trim();
 			param3 = temp.substring(commaIndexes.get(1)+1, parameters.length()).trim();
 		}
 	}

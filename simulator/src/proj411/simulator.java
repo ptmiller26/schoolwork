@@ -131,7 +131,7 @@ public class simulator {
 			}
 			else
 			{
-				MIPSLabelsArray.add(null);	// adding nothing to the current index
+				MIPSLabelsArray.add("");	// adding nothing to the current index
 				addInstruction(sCurrentLine);
 			}
 			//addInstruction(sCurrentLine);
@@ -159,6 +159,7 @@ public class simulator {
 		else if (line.equalsIgnoreCase("HLT"))
 		{
 			MIPSInstructionsArray.add(line);
+			MIPSParametersArray.add("");	// adding nothing just to keep the array sizes uniform
 		}
 	}
 	
@@ -234,25 +235,43 @@ public class simulator {
 			parser.readInputFile(args[0], eInstructionType.INSTRUCTION);	// parsing the assembly instructions
 			parser.readInputFile(args[1], eInstructionType.DATA);	// parsing the data
 			parser.decodeInstructions(eInstructionType.MIPSINSTRUCTION);
-			for (int i = 0; i < parser.MIPSInstructionsArray.size(); ++i)
+//			for (int i = 0; i < parser.MIPSInstructionsArray.size(); ++i)
+//			{
+//				System.out.println(parser.MIPSInstructionsArray.get(i).toString());
+//			}
+//			for (int i = 0; i < parser.MIPSParametersArray.size(); ++i)
+//			{
+//				System.out.println(parser.MIPSParametersArray.get(i).toString());
+//			}
+//			for (int i = 0; i < parser.MIPSLabelsArray.size(); ++i)
+//			{
+//				if (parser.MIPSLabelsArray.get(i) == null)
+//				{
+//					System.out.println("null");
+//				}
+//				else
+//				{
+//					System.out.println(parser.MIPSLabelsArray.get(i).toString());
+//				}
+//			}
+			
+			instruction[] testArray = new instruction[11];
+
+			for (int i = 0; i < 11; i++)
 			{
-				System.out.println(parser.MIPSInstructionsArray.get(i).toString());
+				testArray[i] = new instruction(parser.MIPSInstructionsArray.get(i).toString(),
+						parser.MIPSParametersArray.get(i).toString(),
+						parser.MIPSLabelsArray.get(i).toString());
+				System.out.print(testArray[i].getInstruction() + " ");
+				System.out.print(testArray[i].getFirstParameter() + " ");
+				System.out.print(testArray[i].getSecondParameter() + " ");
+				System.out.println(testArray[i].getThirdParameter());
 			}
-			for (int i = 0; i < parser.MIPSParametersArray.size(); ++i)
-			{
-				System.out.println(parser.MIPSParametersArray.get(i).toString());
-			}
-			for (int i = 0; i < parser.MIPSLabelsArray.size(); ++i)
-			{
-				if (parser.MIPSLabelsArray.get(i) == null)
-				{
-					System.out.println("null");
-				}
-				else
-				{
-					System.out.println(parser.MIPSLabelsArray.get(i).toString());
-				}
-			}
+//			System.out.println(parser.MIPSInstructionsArray.size());
+//			System.out.println(parser.MIPSParametersArray.size());
+//			System.out.println(parser.MIPSLabelsArray.size());
+//			System.out.println(parser.InstructionsArray.size());
+//			System.out.println(parser.DataArray.size());
 		}
 	}
 }
