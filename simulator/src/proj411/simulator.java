@@ -12,7 +12,7 @@ enum eInstructionType
 }
 
 /**
- * @author Patrick
+ * @author Patrick - testing for commit
  *
  */
 public class simulator {
