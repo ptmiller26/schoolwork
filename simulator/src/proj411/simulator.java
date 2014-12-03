@@ -13,6 +13,7 @@ enum eInstructionType
 
 /**
  * @author Patrick - testing for commit
+ * Last Commit Test
  *
  */
 public class simulator {
