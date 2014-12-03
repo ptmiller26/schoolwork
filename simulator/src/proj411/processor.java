@@ -3,7 +3,6 @@
  */
 package proj411;
 
-import java.io.*;
 import java.util.*;
 
 /**
@@ -11,10 +10,15 @@ import java.util.*;
  *
  */
 public class processor {
+	
+	int numInstructions;
+	
 
 	public processor(ArrayList<String> instructions, ArrayList<String> parameters, 
 			ArrayList<String> data, ArrayList<String> labels)
 	{
-		
+		numInstructions = 0;
 	}
+	
+	
 }

@@ -3,7 +3,6 @@
  */
 package proj411;
 
-import java.io.*;
 import java.util.*;
 
 /**
@@ -82,9 +81,16 @@ public class instruction {
 	
 	// returns true if it allows forwarding
 	// returns false if it does not allow forwarding
-	public boolean allowsForwarding()
+	public boolean requiresForwarding(String previousLocation)
 	{
-		return true;
+		if (previousLocation.equalsIgnoreCase(param2) || previousLocation.equalsIgnoreCase(param3))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 	
 	private int getExecInstructionCount()
