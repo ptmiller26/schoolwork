@@ -108,7 +108,8 @@ public class instruction {
 			return false;
 		}
 	}
-	
+	 
+	// pmiller - might not need this in the end
 	private int getExecInstructionCount()
 	{
 		if (instruction.equalsIgnoreCase("MULTI"))

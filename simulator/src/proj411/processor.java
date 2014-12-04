@@ -3,7 +3,6 @@
  */
 package proj411;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import stages.InstructionFetch;
@@ -18,31 +17,33 @@ import stages.WriteBack;
  */
 public class processor {
 	
+	// the king of them all
+	ArrayList<instruction> InstructionsInPipeline;
+	
+	boolean bHitFirstHLT;
+	boolean bHitSecondHLT;
 	int instructionCounter;
-	private final InstructionFetch IF;
-	private final InstructionDecode ID;
-	private final Execute EX;
-	private final Memory MEM;
-	private final WriteBack WB;
+//	private final InstructionFetch IF;
+//	private final InstructionDecode ID;
+//	private final Execute EX;
+//	private final Memory MEM;
+//	private final WriteBack WB;
 	
 	ArrayList<instruction> instructionHolder;
 	ArrayList<String> dataHolder;
-	//ArrayList<String> parameterHolder;
-	//ArrayList<String> labelHolder;
 	
 	HashMap<String, register> registers; 
 	HashMap<Integer, Integer> dataMap;
-	//register[] registerArray = new register[32];	// represent r1-r31
 	
-
-//	public processor(ArrayList<String> instructions, ArrayList<String> parameters, 
-//			ArrayList<String> data, ArrayList<String> labels)
 	public processor(ArrayList<instruction> instructionArray, ArrayList<String> data)
 	{
+		InstructionsInPipeline = new ArrayList<instruction>();
+		
+		bHitFirstHLT = false;
+		bHitSecondHLT = false;
+		
 		instructionHolder = instructionArray;
 		dataHolder = data;
-		//parameterHolder = parameters;
-		//labelHolder = labels;
 		
 		instructionCounter = 0;
 		registers = new HashMap<String, register>(); // represent r1-r31
@@ -51,13 +52,16 @@ public class processor {
 		initRegisters();
 		initData();
 		
-		IF = new InstructionFetch();
-		ID = new InstructionDecode();
-		EX = new Execute();
-		MEM = new Memory();
-		WB = new WriteBack();
+//		IF = new InstructionFetch();
+//		ID = new InstructionDecode();
+//		EX = new Execute();
+//		MEM = new Memory();
+//		WB = new WriteBack();
 		
-		Tick();
+		while(!bHitSecondHLT)	// pmiller <----- need to update this condition
+		{
+			Tick();
+		}
 	}
 	
 	public void initRegisters()
@@ -75,42 +79,53 @@ public class processor {
 		{
 			Integer temp;
 			temp = Integer.parseInt(dataHolder.get(i), 2);
-			dataMap.put(i+100, temp);
+			dataMap.put((4*i)+256, temp);
 		}
+//		Iterator i = dataMap.entrySet().iterator();
+//		while (i.hasNext())
+//		{
+//			String key = i.next().toString();
+//			String value = i.next().toString();
+//			System.out.println(key + " " + value);
+//		}
 	}
 	
 	public void Tick()
 	{
 		int cycleCount = 0;
 		
-		addInstructionToPipeline();
-		
-		while (WB.isFinished() == false)
+		if (addInstructionToPipeline())
 		{
-			IF.Tick();
-			ID.Tick();
-			EX.Tick();
-			MEM.Tick();
-			WB.Tick();
+			instruction instructionToAdd = instructionHolder.get(instructionCounter);
+			InstructionsInPipeline.add(instructionToAdd);
+			instructionCounter++;
+		}
+		else
+		{
+			// we need to stall
 		}
 		
+//		while (WB.isFinished() == false)
+//		{
+//			IF.Tick();
+//			ID.Tick();
+//			EX.Tick();
+//			MEM.Tick();
+//			WB.Tick();
+//		}
+		
 		cycleCount++;
-		RegistersTick();
+		//RegistersTick();
 	}
 	
-//	public int getDecimalValue(String hexValue)
-//	{
-//		
-//	}
-	
-	public void addInstructionToPipeline()
+	// returns false if it don't work and we need to stall like a muthafucka
+	public boolean addInstructionToPipeline()
 	{
 		instruction temp = instructionHolder.get(instructionCounter);
 		if (temp.getInstruction().equalsIgnoreCase("LI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
-			temp.initStageEnum();
 			if (param2.indexOf("h") != -1)
 			{
 				int index = param2.indexOf("h");
@@ -123,33 +138,89 @@ public class processor {
 			}
 			Integer decValue = Integer.parseInt(param2, 16);
 			register reg = registers.get(param1);
-			reg.setValue(decValue);
+			if (!reg.isLocked())
+			{
+				reg.setValue(decValue);
+				reg.lock();
+				temp.initStageEnum();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+			
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("LW"))
 		{
-			
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String sourceRegString;
+			String offsetString;
+			register destReg = registers.get(param1);
+			if (param2.indexOf("(") != -1)
+			{
+				int parensIdx = param2.indexOf("(");
+				sourceRegString = param2.substring(parensIdx +1, param2.length()-1);
+				offsetString = param2.substring(0, parensIdx);
+				Integer offsetVal = Integer.parseInt(offsetString);
+				int sourceRegVal = registers.get(sourceRegString).getValue();
+				if ((offsetVal + sourceRegVal) % 4 == 0)
+				{
+					destReg.setValue(dataMap.get(offsetVal + sourceRegVal));
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return true;
 		}
-		else if (temp.getInstruction().equalsIgnoreCase("SW"))
-		{
-			
+		else if (temp.getInstruction().equalsIgnoreCase("SW"))	// not sure if this is right at all
+		{														// i wrote it when i was half asleep at 1:13AM
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String destRegString;
+			String offsetString;
+			register sourceReg = registers.get(param1);
+			if (param2.indexOf("(") != -1)
+			{
+				int parensIdx = param2.indexOf("(");
+				destRegString = param2.substring(parensIdx +1, param2.length()-1);
+				offsetString = param2.substring(0, parensIdx);
+				Integer offsetVal = Integer.parseInt(offsetString);
+				int destRegVal = registers.get(destRegString).getValue();
+				if ((offsetVal + destRegVal) % 4 == 0)
+				{
+					dataMap.put(offsetVal + destRegVal, sourceReg.getValue());
+					//sourceReg.setValue(dataMap.get(offsetVal + destRegVal));
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("ADD"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal + thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("ADDI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			if (param3.indexOf("h") != -1)
 			{
 				int index = param3.indexOf("h");
@@ -164,24 +235,26 @@ public class processor {
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			firstReg.setValue(decValue + secondReg.getValue());
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SUB"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal - thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SUBI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			if (param3.indexOf("h") != -1)
 			{
 				int index = param3.indexOf("h");
@@ -196,24 +269,26 @@ public class processor {
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			firstReg.setValue(secondReg.getValue() - decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("AND"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal & thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("ANDI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			if (param3.indexOf("h") != -1)
 			{
 				int index = param3.indexOf("h");
@@ -228,24 +303,26 @@ public class processor {
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			firstReg.setValue(secondReg.getValue() & decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("OR"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal | thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("ORI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			if (param3.indexOf("h") != -1)
 			{
 				int index = param3.indexOf("h");
@@ -260,51 +337,116 @@ public class processor {
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			firstReg.setValue(secondReg.getValue() | decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SLL"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal << thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SRL"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal >> thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SRA"))
 		{
-			// what is this arithmetic bullshit?
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String param3 = temp.getThirdParameter();
+			int secondRegVal = registers.get(param2).getValue();
+			int thirdRegVal = registers.get(param3).getValue();
+			register reg = registers.get(param1);
+			reg.setValue(secondRegVal >>> thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SLLI"))
 		{
-			// what is shamt?
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String param3 = temp.getThirdParameter();
+			if (param3.indexOf("h") != -1)
+			{
+				int index = param3.indexOf("h");
+				param3 = param3.substring(0, index);
+			}
+			else if (param3.contains("H"))
+			{
+				int index = param3.indexOf("H");
+				param3 = param3.substring(0, index);
+			}
+			Integer decValue = Integer.parseInt(param3, 16);
+			int secondRegVal = registers.get(param2).getValue();
+			register reg = registers.get(param1);
+			reg.setValue(secondRegVal << decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SRLI"))
 		{
-			// what is shamt?
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String param3 = temp.getThirdParameter();
+			if (param3.indexOf("h") != -1)
+			{
+				int index = param3.indexOf("h");
+				param3 = param3.substring(0, index);
+			}
+			else if (param3.contains("H"))
+			{
+				int index = param3.indexOf("H");
+				param3 = param3.substring(0, index);
+			}
+			Integer decValue = Integer.parseInt(param3, 16);
+			int secondRegVal = registers.get(param2).getValue();
+			register reg = registers.get(param1);
+			reg.setValue(secondRegVal >> decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("SRAI"))
 		{
-			// what is shamt?
+			String param1 = temp.getFirstParameter();
+			String param2 = temp.getSecondParameter();
+			String param3 = temp.getThirdParameter();
+			if (param3.indexOf("h") != -1)
+			{
+				int index = param3.indexOf("h");
+				param3 = param3.substring(0, index);
+			}
+			else if (param3.contains("H"))
+			{
+				int index = param3.indexOf("H");
+				param3 = param3.substring(0, index);
+			}
+			Integer decValue = Integer.parseInt(param3, 16);
+			int secondRegVal = registers.get(param2).getValue();
+			register reg = registers.get(param1);
+			reg.setValue(secondRegVal >>> decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("BEQ"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			int iReg1 = firstReg.getValue();
@@ -313,13 +455,14 @@ public class processor {
 			{
 				// what do we put here?
 			}
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("BNE"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			int iReg1 = firstReg.getValue();
@@ -328,28 +471,30 @@ public class processor {
 			{
 				// what do we put here?
 			}
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("J"))
 		{
-			
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("MULT"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			int secondRegVal = registers.get(param2).getValue();
 			int thirdRegVal = registers.get(param3).getValue();
 			register reg = registers.get(param1);
 			reg.setValue(secondRegVal * thirdRegVal);
+			temp.initStageEnum();
+			return true;
 		}
 		else if (temp.getInstruction().equalsIgnoreCase("MULTI"))
 		{
 			String param1 = temp.getFirstParameter();
 			String param2 = temp.getSecondParameter();
 			String param3 = temp.getThirdParameter();
-			temp.initStageEnum();
 			if (param3.indexOf("h") != -1)
 			{
 				int index = param3.indexOf("h");
@@ -364,18 +509,19 @@ public class processor {
 			register firstReg = registers.get(param1);
 			register secondReg = registers.get(param2);
 			firstReg.setValue(secondReg.getValue() * decValue);
+			temp.initStageEnum();
+			return true;
 		}
 		else
 		{
-			
+			return false;
 		}
-		
 	}
 	
-	public void RegistersTick()
-	{
-		
-	}
+//	public void RegistersTick()
+//	{
+//		
+//	}
 	
 	
 }

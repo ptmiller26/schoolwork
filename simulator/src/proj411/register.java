@@ -4,14 +4,14 @@ public class register {
 
 	public int value;
 	public boolean bLocked;
-	public int newValue;
+	//public int newValue;
 	
 	
 	public register()
 	{
-		value = 0;
+		value = -1;
 		bLocked = false;
-		newValue = -1;
+		//newValue = -1;
 	}
 	
 	public int getValue()
@@ -21,7 +21,13 @@ public class register {
 	
 	public void setValue(int incomingValue)
 	{
-		newValue = incomingValue;
+		value = incomingValue;
+		//newValue = incomingValue;
+	}
+	
+	public boolean isLocked()
+	{
+		return bLocked;
 	}
 	
 	public void lock()
@@ -34,15 +40,15 @@ public class register {
 		bLocked = false;
 	}
 	
-	public void Tick()
-	{
-		if (bLocked == false)
-		{
-			if (newValue != -1)
-			{
-				value = newValue;
-				newValue = -1;
-			}
-		}
-	}
+//	public void Tick()
+//	{
+//		if (bLocked == false)
+//		{
+//			if (newValue != -1)
+//			{
+//				value = newValue;
+//				newValue = -1;
+//			}
+//		}
+//	}
 }

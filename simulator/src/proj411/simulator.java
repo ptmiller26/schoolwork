@@ -66,17 +66,12 @@ public class simulator {
 		{
 			String sCurrentLine;
 			inputStream = new FileInputStream(file);
-			//dataStream = new DataInputStream(inputStream);	<--- pmiller - don't think i need this
 			buffReader = new BufferedReader(new FileReader(sFilename));
 
 			while ((sCurrentLine = buffReader.readLine()) != null)
 			{
 				parsedArray.add(parseLine(sCurrentLine));
 			}
-//			for (int i = 0; i < parsedArray.size(); ++i)
-//			{
-//				System.out.println(parsedArray.get(i).toString());
-//			}
 			inputStream.close();
 		}
 		catch (IOException e)
@@ -104,7 +99,6 @@ public class simulator {
 	String parseLine(String currentLine)
 	{
 		currentLine = currentLine.replaceAll("\t", "");	// removing all tabs
-		//currentLine = currentLine.replaceAll(" ", "");	// removing all spaces
 		if (currentLine.contains("#"))
 		{
 			int commentIndex = currentLine.indexOf("#");
@@ -115,18 +109,6 @@ public class simulator {
 	
 	void parseInstructions(eInstructionType eType)
 	{
-		//ArrayList<String> TemporaryArray = new ArrayList<String>();
-//		switch (eType) 
-//		{
-//			case MIPSINSTRUCTION:
-//				TemporaryArray = justInstructionsArr;
-//			case MIPSPARAMETERS:
-//				TemporaryArray = justParametersArr;
-//			case MIPSLABEL:
-//				TemporaryArray = justLabelsArr;
-//			default: 
-//		}
-		
 		String sCurrentLine;
 		for (int i = 0; i < RawInstructions.size(); i++)
 		{
@@ -142,8 +124,6 @@ public class simulator {
 				justLabelsArr.add("");	// adding nothing to the current index
 				addInstruction(sCurrentLine);
 			}
-			//addInstruction(sCurrentLine);
-			//addParameters(sCurrentLine);
 		}
 	}
 	
@@ -238,7 +218,6 @@ public class simulator {
 			
 			instruction temp = new instruction(inst, params, label);
 			instructionArray.add(temp);
-			//System.out.println("Inside initInstructions For Loop " + i);
 		}
 	}
 	
@@ -260,43 +239,6 @@ public class simulator {
 			parser.parseInstructions(eInstructionType.MIPSINSTRUCTION);
 			parser.initInstructions();
 			processor theProcessor = new processor(parser.instructionArray, parser.DataArray);
-//			for (int i = 0; i < parser.justInstructionsArr.size(); ++i)
-//			{
-//				System.out.println(parser.justInstructionsArr.get(i).toString());
-//			}
-//			for (int i = 0; i < parser.justParametersArr.size(); ++i)
-//			{
-//				System.out.println(parser.justParametersArr.get(i).toString());
-//			}
-//			for (int i = 0; i < parser.justLabelsArr.size(); ++i)
-//			{
-//				if (parser.justLabelsArr.get(i) == null)
-//				{
-//					System.out.println("null");
-//				}
-//				else
-//				{
-//					System.out.println(parser.justLabelsArr.get(i).toString());
-//				}
-//			}
-			
-			//instruction[] testArray = new instruction[11];
-
-//			for (int i = 0; i < 11; i++)
-//			{
-//				testArray[i] = new instruction(parser.justInstructionsArr.get(i).toString(),
-//						parser.justParametersArr.get(i).toString(),
-//						parser.justLabelsArr.get(i).toString());
-//				System.out.print(testArray[i].getInstruction() + " ");
-//				System.out.print(testArray[i].getFirstParameter() + " ");
-//				System.out.print(testArray[i].getSecondParameter() + " ");
-//				System.out.println(testArray[i].getThirdParameter());
-//			}
-//			System.out.println(parser.justInstructionsArr.size());
-//			System.out.println(parser.justParametersArr.size());
-//			System.out.println(parser.justLabelsArr.size());
-//			System.out.println(parser.InstructionsArray.size());
-//			System.out.println(parser.DataArray.size());
 		}
 	}
 }
