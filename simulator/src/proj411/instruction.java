@@ -10,6 +10,10 @@ import java.util.*;
  *
  */
 public class instruction {
+	
+	public enum Stage {
+		IF, ID, EX, MEM, WB
+	};
 
 	int numExInstructions;
 	public String instruction;
@@ -18,6 +22,7 @@ public class instruction {
 	public String param2;
 	public String param3;
 	public String label;
+	public Stage eStage;
 	
 	public instruction(String inst, String params, String lab)
 	{
@@ -29,6 +34,17 @@ public class instruction {
 			label = lab;
 		}
 		numExInstructions = getExecInstructionCount();
+	}
+	
+	public void initStageEnum()
+	{
+		eStage = Stage.IF;
+	}
+	
+	public void incrementStageEnum()
+	{
+		
+		eStage = Stage.values()[eStage.ordinal() + 1];
 	}
 	
 	private void parseParameters()

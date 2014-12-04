@@ -23,18 +23,18 @@ enum eInstructionType
  */
 public class simulator {
 	
-	public ArrayList<String> InstructionsArray, DataArray, MIPSInstructionsArray, MIPSParametersArray, MIPSLabelsArray;
-	
+	public ArrayList<String> RawInstructions, DataArray, justInstructionsArr, justParametersArr, justLabelsArr;
+	public ArrayList<instruction> instructionArray;
 	
 	
 	// constructor
 	public simulator()
 	{
-		InstructionsArray = new ArrayList<String>();		// holds assembly instructions
+		RawInstructions = new ArrayList<String>();		// holds assembly instructions
 		DataArray = new ArrayList<String>();				// holds data
-		MIPSInstructionsArray = new ArrayList<String>();	// holds the MIPS instructions
-		MIPSParametersArray = new ArrayList<String>();		// holds the MIPS parameters
-		MIPSLabelsArray = new ArrayList<String>();			// holds the MIPS labels
+		justInstructionsArr = new ArrayList<String>();	// holds the MIPS instructions
+		justParametersArr = new ArrayList<String>();		// holds the MIPS parameters
+		justLabelsArr = new ArrayList<String>();			// holds the MIPS labels
 	}
 	
 	
@@ -50,7 +50,7 @@ public class simulator {
 		ArrayList<String> parsedArray = null;
 		if (eType == eInstructionType.INSTRUCTION)
 		{
-			parsedArray = InstructionsArray;
+			parsedArray = RawInstructions;
 		}
 		else if (eType == eInstructionType.DATA)
 		{
@@ -113,24 +113,24 @@ public class simulator {
 		return currentLine.trim();
 	}
 	
-	void decodeInstructions(eInstructionType eType)
+	void parseInstructions(eInstructionType eType)
 	{
 		//ArrayList<String> TemporaryArray = new ArrayList<String>();
 //		switch (eType) 
 //		{
 //			case MIPSINSTRUCTION:
-//				TemporaryArray = MIPSInstructionsArray;
+//				TemporaryArray = justInstructionsArr;
 //			case MIPSPARAMETERS:
-//				TemporaryArray = MIPSParametersArray;
+//				TemporaryArray = justParametersArr;
 //			case MIPSLABEL:
-//				TemporaryArray = MIPSLabelsArray;
+//				TemporaryArray = justLabelsArr;
 //			default: 
 //		}
 		
 		String sCurrentLine;
-		for (int i = 0; i < InstructionsArray.size(); i++)
+		for (int i = 0; i < RawInstructions.size(); i++)
 		{
-			sCurrentLine = InstructionsArray.get(i);
+			sCurrentLine = RawInstructions.get(i);
 			if (sCurrentLine.contains(":"))
 			{
 				addLabels(sCurrentLine);	// adding the label to the current index
@@ -139,7 +139,7 @@ public class simulator {
 			}
 			else
 			{
-				MIPSLabelsArray.add("");	// adding nothing to the current index
+				justLabelsArr.add("");	// adding nothing to the current index
 				addInstruction(sCurrentLine);
 			}
 			//addInstruction(sCurrentLine);
@@ -161,13 +161,13 @@ public class simulator {
 		}
 		if (isValidInstruction(temp))
 		{
-			MIPSInstructionsArray.add(temp);
+			justInstructionsArr.add(temp);
 			addParameters(temp.length(), line);
 		}
 		else if (line.equalsIgnoreCase("HLT"))
 		{
-			MIPSInstructionsArray.add(line);
-			MIPSParametersArray.add("");	// adding nothing just to keep the array sizes uniform
+			justInstructionsArr.add(line);
+			justParametersArr.add("");	// adding nothing just to keep the array sizes uniform
 		}
 	}
 	
@@ -210,7 +210,7 @@ public class simulator {
 		String temp;
 		temp = line.substring(startingIndex, line.length());
 		temp = temp.trim();
-		MIPSParametersArray.add(temp);
+		justParametersArr.add(temp);
 	}
 	
 	void addLabels(String line)
@@ -224,7 +224,22 @@ public class simulator {
 		{
 			temp = line.substring(0, line.indexOf("\t"));
 		}
-		MIPSLabelsArray.add(temp);	// adding the label
+		justLabelsArr.add(temp);	// adding the label
+	}
+	
+	public void initInstructions()
+	{
+		instructionArray = new ArrayList<instruction>();
+		for (int i = 0; i < justInstructionsArr.size(); i++)
+		{
+			String inst = justInstructionsArr.get(i);
+			String params = justParametersArr.get(i);
+			String label = justLabelsArr.get(i);
+			
+			instruction temp = new instruction(inst, params, label);
+			instructionArray.add(temp);
+			//System.out.println("Inside initInstructions For Loop " + i);
+		}
 	}
 	
 	/**
@@ -242,42 +257,44 @@ public class simulator {
 			simulator parser = new simulator();
 			parser.readInputFile(args[0], eInstructionType.INSTRUCTION);	// parsing the assembly instructions
 			parser.readInputFile(args[1], eInstructionType.DATA);	// parsing the data
-			parser.decodeInstructions(eInstructionType.MIPSINSTRUCTION);
-//			for (int i = 0; i < parser.MIPSInstructionsArray.size(); ++i)
+			parser.parseInstructions(eInstructionType.MIPSINSTRUCTION);
+			parser.initInstructions();
+			processor theProcessor = new processor(parser.instructionArray, parser.DataArray);
+//			for (int i = 0; i < parser.justInstructionsArr.size(); ++i)
 //			{
-//				System.out.println(parser.MIPSInstructionsArray.get(i).toString());
+//				System.out.println(parser.justInstructionsArr.get(i).toString());
 //			}
-//			for (int i = 0; i < parser.MIPSParametersArray.size(); ++i)
+//			for (int i = 0; i < parser.justParametersArr.size(); ++i)
 //			{
-//				System.out.println(parser.MIPSParametersArray.get(i).toString());
+//				System.out.println(parser.justParametersArr.get(i).toString());
 //			}
-//			for (int i = 0; i < parser.MIPSLabelsArray.size(); ++i)
+//			for (int i = 0; i < parser.justLabelsArr.size(); ++i)
 //			{
-//				if (parser.MIPSLabelsArray.get(i) == null)
+//				if (parser.justLabelsArr.get(i) == null)
 //				{
 //					System.out.println("null");
 //				}
 //				else
 //				{
-//					System.out.println(parser.MIPSLabelsArray.get(i).toString());
+//					System.out.println(parser.justLabelsArr.get(i).toString());
 //				}
 //			}
 			
-			instruction[] testArray = new instruction[11];
+			//instruction[] testArray = new instruction[11];
 
-			for (int i = 0; i < 11; i++)
-			{
-				testArray[i] = new instruction(parser.MIPSInstructionsArray.get(i).toString(),
-						parser.MIPSParametersArray.get(i).toString(),
-						parser.MIPSLabelsArray.get(i).toString());
-				System.out.print(testArray[i].getInstruction() + " ");
-				System.out.print(testArray[i].getFirstParameter() + " ");
-				System.out.print(testArray[i].getSecondParameter() + " ");
-				System.out.println(testArray[i].getThirdParameter());
-			}
-//			System.out.println(parser.MIPSInstructionsArray.size());
-//			System.out.println(parser.MIPSParametersArray.size());
-//			System.out.println(parser.MIPSLabelsArray.size());
+//			for (int i = 0; i < 11; i++)
+//			{
+//				testArray[i] = new instruction(parser.justInstructionsArr.get(i).toString(),
+//						parser.justParametersArr.get(i).toString(),
+//						parser.justLabelsArr.get(i).toString());
+//				System.out.print(testArray[i].getInstruction() + " ");
+//				System.out.print(testArray[i].getFirstParameter() + " ");
+//				System.out.print(testArray[i].getSecondParameter() + " ");
+//				System.out.println(testArray[i].getThirdParameter());
+//			}
+//			System.out.println(parser.justInstructionsArr.size());
+//			System.out.println(parser.justParametersArr.size());
+//			System.out.println(parser.justLabelsArr.size());
 //			System.out.println(parser.InstructionsArray.size());
 //			System.out.println(parser.DataArray.size());
 		}
