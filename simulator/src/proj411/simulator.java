@@ -5,11 +5,6 @@ package proj411;
 
 import java.io.*;
 import java.util.*;
-import stages.InstructionFetch;
-import stages.InstructionDecode;
-import stages.Execute;
-import stages.Memory;
-import stages.WriteBack;
 
 enum eInstructionType 
 {

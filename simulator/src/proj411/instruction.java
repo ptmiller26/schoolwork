@@ -12,7 +12,7 @@ import java.util.*;
 public class instruction {
 	
 	public enum Stage {
-		IF, ID, EX, MEM, WB
+		NONE, IF, ID, EX1, EX2, EX3, EX4, MEM, WB, DONE
 	};
 
 	int numExInstructions;
@@ -26,6 +26,7 @@ public class instruction {
 	
 	public instruction(String inst, String params, String lab)
 	{
+		eStage = Stage.NONE;
 		instruction = inst;
 		parameters = params;
 		parseParameters();
@@ -43,8 +44,58 @@ public class instruction {
 	
 	public void incrementStageEnum()
 	{
-		
-		eStage = Stage.values()[eStage.ordinal() + 1];
+		if (!eStage.equals(Stage.DONE))
+		{
+			eStage = Stage.values()[eStage.ordinal() + 1];
+		}
+	}
+	
+	public String getStageToString()
+	{
+		if (eStage == Stage.NONE)
+		{
+			return "NONE";
+		}
+		else if (eStage == Stage.IF)
+		{
+			return "IF";
+		}
+		else if (eStage == Stage.ID)
+		{
+			return "ID";
+		}
+		else if (eStage == Stage.EX1)
+		{
+			return "EX1";
+		}
+		else if (eStage == Stage.EX2)
+		{
+			return "EX2";
+		}
+		else if (eStage == Stage.EX3)
+		{
+			return "EX3";
+		}
+		else if (eStage == Stage.EX4)
+		{
+			return "EX4";
+		}
+		else if (eStage == Stage.MEM)
+		{
+			return "MEM";
+		}
+		else if (eStage == Stage.WB)
+		{
+			return "WB";
+		}
+		else if (eStage == Stage.DONE)
+		{
+			return "DONE";
+		}
+		else
+		{
+			return "";
+		}
 	}
 	
 	private void parseParameters()
@@ -93,6 +144,11 @@ public class instruction {
 	public String getThirdParameter()
 	{
 		return param3;
+	}
+	
+	public Stage getStage()
+	{
+		return eStage;
 	}
 	
 	// returns true if it allows forwarding
