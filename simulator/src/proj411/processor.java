@@ -13,6 +13,9 @@ public class processor {
 	
 	// the king of them all
 	ArrayList<instruction> InstructionsInPipeline;
+	
+	InstructionCache ICache;
+	DataCache DCache;
 
 	boolean bHitFirstHLT;
 	boolean bHitSecondHLT;
@@ -24,6 +27,7 @@ public class processor {
 	boolean bEX4Open;
 	boolean bMEMOpen;
 	boolean bWBOpen;
+	boolean bStall;
 	
 	int instructionCounter;	// keeps track of current instruction
 	int programCounter;		// keeps track of current line
@@ -47,6 +51,7 @@ public class processor {
 		bEX4Open = true;
 		bMEMOpen = true;
 		bWBOpen = true;
+		bStall = false;
 		
 		bHitFirstHLT = false;
 		bHitSecondHLT = false;
@@ -58,6 +63,9 @@ public class processor {
 		programCounter = 0;
 		registers = new HashMap<String, register>(); // represent r1-r31
 		dataMap = new HashMap<Integer, Integer>();
+		
+		ICache = new InstructionCache();
+		DCache = new DataCache();
 		
 		initRegisters();
 		initData();
@@ -178,7 +186,7 @@ public class processor {
 			case "MEM":
 				instructsInArray[6] = temp.getInstruction();
 				break;
-			case "WB":
+			case "WB": 
 				instructsInArray[7] = temp.getInstruction();
 				break;
 			}
@@ -201,7 +209,7 @@ public class processor {
 			{
 				if (bIDOpen)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bIFOpen = true;
 				}
 			}
@@ -209,7 +217,7 @@ public class processor {
 			{
 				if (bEX1Open)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bIDOpen = true;
 				}
 			}
@@ -217,7 +225,7 @@ public class processor {
 			{
 				if (bEX2Open)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bEX1Open = true;
 				}
 			}
@@ -225,7 +233,7 @@ public class processor {
 			{
 				if (bEX3Open)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bEX2Open = true;
 				}
 			}
@@ -233,7 +241,7 @@ public class processor {
 			{
 				if (bEX4Open)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bEX3Open = true;
 				}
 			}
@@ -241,7 +249,7 @@ public class processor {
 			{
 				if (bMEMOpen)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bEX4Open = true;
 				}
 			}
@@ -249,13 +257,13 @@ public class processor {
 			{
 				if (bWBOpen)
 				{
-					temp.incrementStageEnum();
+					temp.incrementStageEnum(cycleCount);
 					bMEMOpen = true;
 				}
 			}
 			else if (currentStageVal == 8)	// currently in WB
 			{
-				temp.incrementStageEnum();
+				temp.incrementStageEnum(cycleCount);
 				bWBOpen = true;
 				// instruction is finished in pipeline
 				// we need to remove it somehow and let the system know
@@ -322,6 +330,15 @@ public class processor {
 	public boolean loadNextInstructionIntoPipeline()
 	{
 		instruction temp = instructionHolder.get(instructionCounter);
+		if(!ICache.isInCache(programCounter))
+		{
+			ICache.loadEntireRow(programCounter);
+		}
+		else
+		{
+			
+		}
+		// pmiller here
 		if (temp.getInstruction().equalsIgnoreCase("LI"))
 		{
 			String param1 = temp.getFirstParameter();

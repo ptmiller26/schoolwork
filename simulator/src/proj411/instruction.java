@@ -24,6 +24,12 @@ public class instruction {
 	public String label;
 	public Stage eStage;
 	
+	int iLeavesIF;
+	int iLeavesID;
+	int iLeavesEX;
+	int iLeavesMEM;
+	int iLeavesWB;
+	
 	public instruction(String inst, String params, String lab)
 	{
 		eStage = Stage.NONE;
@@ -42,10 +48,37 @@ public class instruction {
 		eStage = Stage.IF;
 	}
 	
-	public void incrementStageEnum()
+	public void incrementStageEnum(int cycleCount)
 	{
 		if (!eStage.equals(Stage.DONE))
 		{
+			switch (eStage)
+			{
+			case IF:
+				iLeavesIF = cycleCount;
+				break;
+			case ID:
+				iLeavesID = cycleCount;
+				break;
+			case EX1:
+				iLeavesIF = cycleCount;
+				break;
+			case EX2:
+				iLeavesIF = cycleCount;
+				break;
+			case EX3:
+				iLeavesIF = cycleCount;
+				break;
+			case EX4:
+				iLeavesIF = cycleCount;
+				break;
+			case MEM:
+				iLeavesIF = cycleCount;
+				break;
+			case WB:
+				iLeavesIF = cycleCount;
+				break;
+			}
 			eStage = Stage.values()[eStage.ordinal() + 1];
 		}
 	}
